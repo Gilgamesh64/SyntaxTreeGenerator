@@ -1,12 +1,13 @@
 
 const NODE_RADIUS = 24;
-const HORIZONTAL_SPACING = 90;
+const HORIZONTAL_SPACING = 140;
 const VERTICAL_SPACING = 120;
 const MARGIN = 50;
 
 let currentZoom = null;
 let currentSvg = null;
 let currentUpdateLinks = null;
+let showEmpty = false;
 
 
 async function loadTree(message) {
@@ -154,9 +155,7 @@ function renderTree(data) {
     /*
      * Draw connections between nodes
      */
-    const links = root.links().filter(
-        link => !link.target.data.placeholder
-    );
+    const links = root.links();
 
     const linkGenerator = d3.linkVertical()
         .x(d => d.x)
@@ -165,8 +164,11 @@ function renderTree(data) {
     const linkElements = drawing.selectAll(".link")
         .data(links)
         .join("path")
-        .attr("class", "link");
-
+        .attr("class", d =>
+            d.target.data.placeholder
+                ? "link empty-link"
+                : "link"
+        );
 
 
     function updateLinks() {
@@ -174,40 +176,51 @@ function renderTree(data) {
         const isMinimal =
             button.classList.contains("minimal");
 
-        linkElements.attr("d", d => {
+        linkElements
+            .style("display", d =>
+                d.target.data.placeholder && !showEmpty
+                    ? "none"
+                    : null
+            )
+            .attr("d", d => {
 
-            if (isMinimal) {
+                if (isMinimal) {
 
-                const dx = d.target.x - d.source.x;
-                const dy = d.target.y - d.source.y;
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
 
-                const distance = Math.sqrt(dx * dx + dy * dy);
+                    const distance = Math.sqrt(
+                        dx * dx + dy * dy
+                    );
 
-                // Leave a gap around both nodes
-                const startGap = 12;
-                const endGap = 12;
+                    const startGap = 30;
+                    const endGap = 30;
 
-                const unitX = dx / distance;
-                const unitY = dy / distance;
+                    const unitX = dx / distance;
+                    const unitY = dy / distance;
 
-                const startX = d.source.x + unitX * startGap;
-                const startY = d.source.y + unitY * startGap;
+                    const startX =
+                        d.source.x + unitX * startGap;
 
-                const endX = d.target.x - unitX * endGap;
-                const endY = d.target.y - unitY * endGap;
+                    const startY =
+                        d.source.y + unitY * startGap;
 
-                return `M${startX},${startY} L${endX},${endY}`;
-            }
+                    const endX =
+                        d.target.x - unitX * endGap;
 
-            return linkGenerator(d);
-        });
+                    const endY =
+                        d.target.y - unitY * endGap;
+
+                    return `M${startX},${startY} L${endX},${endY}`;
+                }
+
+                return linkGenerator(d);
+            });
     }
-
 
     currentUpdateLinks = updateLinks;
 
     updateLinks();
-
 
     /*
      * Draw nodes
@@ -308,6 +321,16 @@ function resetZoom() {
 
 document.getElementById("zoom-in")
     .addEventListener("click", () => changeZoom(1.3));
+
+document.getElementById("showEmpty")
+    .addEventListener("click", () => {
+
+        showEmpty = !showEmpty;
+
+        if (currentUpdateLinks) {
+            currentUpdateLinks();
+        }
+    });
 
 document.getElementById("zoom-out")
     .addEventListener("click", () => changeZoom(0.7));
