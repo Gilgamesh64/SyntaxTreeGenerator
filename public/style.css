@@ -41,10 +41,6 @@ button {
     cursor: pointer;
 }
 
-button:hover {
-    background: #1d4ed8;
-}
-
 main {
     padding: 15px;
 }
@@ -69,6 +65,11 @@ main {
     max-width: none;
 }
 
+
+/* =================================
+   PRETTY MODE
+================================= */
+
 .node circle {
     fill: #2563eb;
     stroke: white;
@@ -90,6 +91,10 @@ main {
     stroke-width: 2px;
 }
 
+
+/* =================================
+   INPUT FORM
+================================= */
 
 .inputForm input {
     box-sizing: border-box;
@@ -122,13 +127,8 @@ main {
     box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1);
 }
 
-
 .inputForm button {
     padding: 14px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -136,13 +136,65 @@ main {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
 }
+
 .inputForm {
     text-align: center;
 }
+
+
+/* =================================
+   MODIFIER WORDS
+================================= */
 
 .node text.modifier {
     fill: #ff9800;
     font-size: 14px;
     font-weight: normal;
     dominant-baseline: auto;
+}
+
+
+/* =================================
+   STYLE TOGGLE BUTTON
+================================= */
+
+#styleToggle {
+    width: 100px;
+    transition: all 0.3s ease;
+}
+
+#styleToggle.minimal {
+    background-color: #222222;
+}
+
+
+/* =================================
+   MINIMAL MODE
+================================= */
+
+/* Remove node circles completely */
+#tree-container svg.minimal-view .node circle {
+    display: none;
+}
+
+/* Plain node text */
+#tree-container svg.minimal-view .node text {
+    fill: #263445;
+    font-size: 15px;
+    font-weight: normal;
+    stroke: none;
+}
+
+/* Modifier words */
+#tree-container svg.minimal-view .node text.modifier {
+    fill: #64748b;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+/* Straight connector lines */
+#tree-container svg.minimal-view .link {
+    fill: none;
+    stroke: #94a3b8;
+    stroke-width: 1.5px;
 }

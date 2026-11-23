@@ -1,3 +1,4 @@
+
 const NODE_RADIUS = 24;
 const HORIZONTAL_SPACING = 90;
 const VERTICAL_SPACING = 120;
@@ -5,11 +6,32 @@ const MARGIN = 50;
 
 let currentZoom = null;
 let currentSvg = null;
+let currentUpdateLinks = null;
+
+document.getElementById("reload-button")
+    .addEventListener("click", loadTree);
+
+const button = document.getElementById("styleToggle");
+
+button.addEventListener("click", () => {
+
+    const isPretty = button.classList.contains("pretty");
+
+    button.classList.toggle("pretty", !isPretty);
+    button.classList.toggle("minimal", isPretty);
+
+    button.textContent = isPretty ? "Minimal" : "Pretty";
+
+    if (currentSvg) {
+        currentSvg.classed("minimal-view", isPretty);
+    }
+
+    if (currentUpdateLinks) {
+        currentUpdateLinks();
+    }
+});
 
 
-/*
- * Fetch tree from Java backend
- */
 async function loadTree(message) {
 
     const status = document.getElementById("status");
@@ -27,9 +49,7 @@ async function loadTree(message) {
         });
 
         if (!response.ok) {
-            throw new Error(
-                `HTTP error: ${response.status}`
-            );
+            throw new Error(`HTTP error: ${response.status}`);
         }
 
         const json = await response.json();
@@ -98,6 +118,7 @@ function renderTree(data) {
 
     currentZoom = null;
     currentSvg = null;
+    currentUpdateLinks = null;
 
     if (!data) {
         document.getElementById("status")
@@ -134,11 +155,19 @@ function renderTree(data) {
         .append("svg")
         .attr("width", "100%")
         .attr("height", "100%")
-        .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+        .attr(
+            "viewBox",
+            `0 0 ${window.innerWidth} ${window.innerHeight}`
+        );
 
     currentSvg = svg;
 
-    // Main drawing group
+    svg.classed(
+        "minimal-view",
+        button.classList.contains("minimal")
+    );
+
+
     const drawing = svg.append("g");
 
     /*
@@ -152,11 +181,52 @@ function renderTree(data) {
         .x(d => d.x)
         .y(d => d.y);
 
-    drawing.selectAll(".link")
+    const linkElements = drawing.selectAll(".link")
         .data(links)
         .join("path")
-        .attr("class", "link")
-        .attr("d", linkGenerator);
+        .attr("class", "link");
+
+
+    
+function updateLinks() {
+
+    const isMinimal =
+        button.classList.contains("minimal");
+
+    linkElements.attr("d", d => {
+
+        if (isMinimal) {
+
+            const dx = d.target.x - d.source.x;
+            const dy = d.target.y - d.source.y;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Leave a gap around both nodes
+            const startGap = 12;
+            const endGap = 12;
+
+            const unitX = dx / distance;
+            const unitY = dy / distance;
+
+            const startX = d.source.x + unitX * startGap;
+            const startY = d.source.y + unitY * startGap;
+
+            const endX = d.target.x - unitX * endGap;
+            const endY = d.target.y - unitY * endGap;
+
+            return `M${startX},${startY} L${endX},${endY}`;
+        }
+
+        return linkGenerator(d);
+    });
+}
+
+
+    currentUpdateLinks = updateLinks;
+
+    updateLinks();
+
 
     /*
      * Draw nodes
@@ -170,13 +240,16 @@ function renderTree(data) {
             d => `translate(${d.x}, ${d.y})`
         );
 
+
     // Node circles
     nodes.append("circle")
         .attr("r", NODE_RADIUS);
 
+
     // Node values
     nodes.append("text")
         .text(d => String(d.data.value ?? ""));
+
 
     // Display words below leaf nodes
     nodes.filter(d => d.data.word)
@@ -185,11 +258,17 @@ function renderTree(data) {
         .attr("y", NODE_RADIUS + 20)
         .text(d => d.data.word);
 
+
+    // Calculate initial position
     const minX = d3.min(allNodes, d => d.x);
 
     const offsetX = MARGIN - minX;
     const offsetY = MARGIN;
 
+
+    /*
+     * Zoom behavior
+     */
     const zoom = d3.zoom()
         .scaleExtent([0.2, 3])
         .on("zoom", event => {
@@ -245,18 +324,4 @@ function resetZoom() {
 }
 
 
-/*
- * Toolbar events
- */
-document.getElementById("reload-button")
-    .addEventListener("click", loadTree);
-
-document.getElementById("zoom-in")
-    .addEventListener("click", () => changeZoom(1.3));
-
-document.getElementById("zoom-out")
-    .addEventListener("click", () => changeZoom(0.7));
-
-document.getElementById("zoom-reset")
-    .addEventListener("click", resetZoom);
 
