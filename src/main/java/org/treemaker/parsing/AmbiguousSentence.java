@@ -53,7 +53,6 @@ public class AmbiguousSentence{
                         else
                             sentence.add(v);
                     }
-                    continue;
                 }
                 
             }

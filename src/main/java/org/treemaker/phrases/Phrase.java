@@ -9,7 +9,7 @@ public class Phrase {
         this.lemma = lemma;
     }
 
-    public static Phrase from(String form, String lemma, String features) throws IllegalStateException{
+    public static Phrase from(String form, String lemma, String features) throws UnknownPhraseException{
         String category = "";
         String regex = "[A-Z]+";
         if(features.matches(regex)){
@@ -25,16 +25,15 @@ public class Phrase {
                 category = withDash;
             }
         }
-
-        String restOf = features.replace(category, "").substring(1);
+        String restOf = features.replace(category, "");
+        if(!restOf.isEmpty()) restOf = restOf.substring(1);
         return switch (category){
             case "VER" -> new Verb(form, lemma, restOf);
             case "NOUN" -> new Noun(form, lemma, restOf);
             case "ART" -> new Article(form, lemma, restOf, false);
             case "ARTPRE" -> new Article(form, lemma, restOf, true);
             case "ADJ" -> new Adjective(form, lemma, restOf);
-            default -> throw new IllegalStateException(
-                "Illegal category for phrase with form: " + form + ", lemma: " + ", features: " + features);
+            default -> throw new UnknownPhraseException(form);
         };
     }
 

@@ -1,22 +1,32 @@
 
 package org.treemaker;
 
+import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
+
+import org.treemaker.phrases.UnknownPhraseException;
 
 public class Server {
 
     private static final Path PUBLIC_DIR = Path.of("public").toAbsolutePath().normalize();
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
-        HttpServer server = HttpServer.create(
-            new InetSocketAddress("0.0.0.0", 8080), 0);
+        HttpServer server = null;
+        try {
+            server = HttpServer.create(
+                    new InetSocketAddress("0.0.0.0", 8080), 0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        
         // API endpoint
         server.createContext("/message", exchange -> {
 
@@ -30,21 +40,52 @@ public class Server {
                     exchange.getRequestBody().readAllBytes(),
                     StandardCharsets.UTF_8);
 
-            System.out.println("Received: " + message);
+            String json = "";
 
-            String json = DatabaseManager.getTree(message);
+            try {
+                json = Generator.getTree(message);
 
-            byte[] response = json.getBytes(StandardCharsets.UTF_8);
+                byte[] response = json.getBytes(StandardCharsets.UTF_8);
 
-            exchange.getResponseHeaders().set(
-                    "Content-Type", "application/json; charset=UTF-8");
+                exchange.getResponseHeaders().set(
+                        "Content-Type", "application/json; charset=UTF-8");
 
-            exchange.sendResponseHeaders(200, response.length);
+                exchange.sendResponseHeaders(200, response.length);
 
-            exchange.getResponseBody().write(response);
-            exchange.close();
+                exchange.getResponseBody().write(response);
+  
+            } catch (SQLException sql) {
+                sendError(
+                    exchange, 
+                    500, 
+                    "SQL_ERROR", 
+                    "Error connecting to the database: " + sql.getMessage());
+            }
+            catch (IOException io){
+                sendError(
+                    exchange,
+                    500, 
+                    "INTERNAL_SERVER_ERROR", 
+                    "Server had a stroke: " + io.getMessage());
+            }
+            catch (UnknownPhraseException up){
+                sendError(exchange,
+                    400, 
+                    "UNKNOWN_WORD_ERROR", 
+                    up.getMessage());
+            }
+            catch (Exception e){
+                e.printStackTrace();
+                sendError(exchange, 
+                    400, 
+                    "UNKNOWN_ERROR", 
+                    e.getMessage());
+            }
+            finally{
+                exchange.close();
+            }
+
         });
-
 
         // Static website files
         server.createContext("/", exchange -> {
@@ -105,6 +146,25 @@ public class Server {
         server.start();
 
         System.out.println("Server running at http://localhost:8080");
+    }
+
+    private static void sendError(HttpExchange exchange, int statusCode, String errorCode, String message) throws IOException {
+
+        String json = """
+                {
+                    "errorCode": "%s",
+                    "message": "%s"
+                }
+                """.formatted(errorCode, message);
+
+        byte[] response = json.getBytes(StandardCharsets.UTF_8);
+
+        exchange.getResponseHeaders().set(
+                "Content-Type", "application/json; charset=UTF-8");
+
+        exchange.sendResponseHeaders(statusCode, response.length);
+
+        exchange.getResponseBody().write(response);
     }
 
     private static String getContentType(Path file) {

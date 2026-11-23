@@ -8,29 +8,6 @@ let currentZoom = null;
 let currentSvg = null;
 let currentUpdateLinks = null;
 
-document.getElementById("reload-button")
-    .addEventListener("click", loadTree);
-
-const button = document.getElementById("styleToggle");
-
-button.addEventListener("click", () => {
-
-    const isPretty = button.classList.contains("pretty");
-
-    button.classList.toggle("pretty", !isPretty);
-    button.classList.toggle("minimal", isPretty);
-
-    button.textContent = isPretty ? "Minimal" : "Pretty";
-
-    if (currentSvg) {
-        currentSvg.classed("minimal-view", isPretty);
-    }
-
-    if (currentUpdateLinks) {
-        currentUpdateLinks();
-    }
-});
-
 
 async function loadTree(message) {
 
@@ -48,11 +25,15 @@ async function loadTree(message) {
             body: message.toLowerCase()
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-
         const json = await response.json();
+
+        if (!response.ok) {
+            status.textContent =
+                `HTTP status: ${response.status}\n` +
+                `Error code: ${json.errorCode}\n` +
+                `Message: ${json.message}`;
+            return;
+        }
 
         renderTree(json);
 
@@ -187,40 +168,40 @@ function renderTree(data) {
         .attr("class", "link");
 
 
-    
-function updateLinks() {
 
-    const isMinimal =
-        button.classList.contains("minimal");
+    function updateLinks() {
 
-    linkElements.attr("d", d => {
+        const isMinimal =
+            button.classList.contains("minimal");
 
-        if (isMinimal) {
+        linkElements.attr("d", d => {
 
-            const dx = d.target.x - d.source.x;
-            const dy = d.target.y - d.source.y;
+            if (isMinimal) {
 
-            const distance = Math.sqrt(dx * dx + dy * dy);
+                const dx = d.target.x - d.source.x;
+                const dy = d.target.y - d.source.y;
 
-            // Leave a gap around both nodes
-            const startGap = 12;
-            const endGap = 12;
+                const distance = Math.sqrt(dx * dx + dy * dy);
 
-            const unitX = dx / distance;
-            const unitY = dy / distance;
+                // Leave a gap around both nodes
+                const startGap = 12;
+                const endGap = 12;
 
-            const startX = d.source.x + unitX * startGap;
-            const startY = d.source.y + unitY * startGap;
+                const unitX = dx / distance;
+                const unitY = dy / distance;
 
-            const endX = d.target.x - unitX * endGap;
-            const endY = d.target.y - unitY * endGap;
+                const startX = d.source.x + unitX * startGap;
+                const startY = d.source.y + unitY * startGap;
 
-            return `M${startX},${startY} L${endX},${endY}`;
-        }
+                const endX = d.target.x - unitX * endGap;
+                const endY = d.target.y - unitY * endGap;
 
-        return linkGenerator(d);
-    });
-}
+                return `M${startX},${startY} L${endX},${endY}`;
+            }
+
+            return linkGenerator(d);
+        });
+    }
 
 
     currentUpdateLinks = updateLinks;
@@ -325,3 +306,28 @@ function resetZoom() {
 
 
 
+document.getElementById("zoom-in")
+    .addEventListener("click", () => changeZoom(1.3));
+
+document.getElementById("zoom-out")
+    .addEventListener("click", () => changeZoom(0.7));
+
+const button = document.getElementById("styleToggle");
+
+button.addEventListener("click", () => {
+
+    const isPretty = button.classList.contains("pretty");
+
+    button.classList.toggle("pretty", !isPretty);
+    button.classList.toggle("minimal", isPretty);
+
+    button.textContent = isPretty ? "Minimal" : "Pretty";
+
+    if (currentSvg) {
+        currentSvg.classed("minimal-view", isPretty);
+    }
+
+    if (currentUpdateLinks) {
+        currentUpdateLinks();
+    }
+});

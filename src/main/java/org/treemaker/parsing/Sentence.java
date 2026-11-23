@@ -31,7 +31,7 @@ public class Sentence{
     }
 
     public <T extends Phrase> boolean contains(Class<T> phrase){
-        return phrases.stream().anyMatch(p -> phrase.isInstance(p));
+        return phrases.stream().anyMatch(phrase::isInstance);
     }
 
     public <T extends Phrase> ArrayList<T> getAll(Class<T> phrase){

@@ -198,3 +198,6 @@ main {
     stroke: #94a3b8;
     stroke-width: 1.5px;
 }
+#status {
+    white-space: pre-line;
+}
