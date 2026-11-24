@@ -66,7 +66,7 @@ public class Tree {
     }
 
     private void writeDP(Node dp){
-        if(sentence.contains(Article.class)){
+        if(sentence.contains(Article.class) && sentence.contains(Verb.class)){
             cm.add(dp, Noun.class);
         }
 
