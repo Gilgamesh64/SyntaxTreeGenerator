@@ -44,6 +44,7 @@ public class Server {
 
             try {
                 json = Generator.getTree(message);
+                System.out.println(json);
 
                 byte[] response = json.getBytes(StandardCharsets.UTF_8);
 

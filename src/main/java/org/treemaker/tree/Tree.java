@@ -57,9 +57,10 @@ public class Tree {
         n.setLeft(noun);
     }
 
-    private void writeDP(Node ap){
+    private void writeDP(Node dp){
+        dp.setConnectionID(1);
         Node a = new Node("D'");
-        ap.setRight(a);
+        dp.setRight(a);
         Node article = new Node("D", sentence.get(Article.class));
         a.setLeft(article);
         if(sentence.contains(Noun.class)){
@@ -106,7 +107,10 @@ public class Tree {
 
         StringBuilder sb = new StringBuilder("{");
         sb.append("\"value\":\"").append(escapeJson(String.valueOf(node.value))).append("\",");
+        
         if(node.phrase != null) sb.append("\"word\":\"").append(escapeJson(node.phrase.getForm())).append("\",");
+        if(node.connectionID != 0) sb.append("\"connection\":").append(node.getConnectionID()+"").append(",");
+        
         sb.append("\"left\":").append(nodeToJson(node.left)).append(",");
         sb.append("\"right\":").append(nodeToJson(node.right)).append("}");
 

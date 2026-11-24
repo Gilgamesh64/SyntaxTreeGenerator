@@ -36,6 +36,8 @@ async function loadTree(message) {
             return;
         }
 
+        console.log(json);
+
         renderTree(json);
 
         status.textContent = "";
@@ -63,6 +65,7 @@ function prepareTree(node) {
     const result = {
         value: node.value,
         word: node.word,
+        connection: node.connection,
         placeholder: false
     };
 
@@ -131,7 +134,6 @@ function renderTree(data) {
         d => !d.data.placeholder
     );
 
-
     // Create SVG
     const svg = d3.select("#tree-container")
         .append("svg")
@@ -153,8 +155,116 @@ function renderTree(data) {
     const drawing = svg.append("g");
 
     /*
-     * Draw connections between nodes
+     * Find pairs of nodes sharing a connection ID
      */
+    const connectionGroups = new Map();
+
+    visibleNodes.forEach(node => {
+
+        const rawConnection = node.data.connection;
+
+        if (rawConnection == null || rawConnection === "") {
+            return;
+        }
+
+        // Accept both integer and string IDs
+        const connection = String(rawConnection);
+
+        if (!connectionGroups.has(connection)) {
+            connectionGroups.set(connection, []);
+        }
+
+        connectionGroups.get(connection).push(node);
+    });
+
+
+    const connections = [];
+
+    connectionGroups.forEach((nodes, id) => {
+
+        if (nodes.length === 2) {
+
+            connections.push({
+                id,
+                source: nodes[0],
+                target: nodes[1]
+            });
+
+        } else {
+
+            console.warn(
+                `Connection ${id} has ${nodes.length} nodes instead of 2`,
+                nodes
+            );
+
+        }
+
+    });
+
+    /*
+     * Define arrowhead marker
+     */
+    const defs = svg.append("defs");
+
+    defs.append("marker")
+        .attr("id", "connection-arrow")
+        .attr("viewBox", "0 0 10 10")
+        .attr("refX", 8)
+        .attr("refY", 5)
+        .attr("markerWidth", 4)
+        .attr("markerHeight", 4)
+        .attr("orient", "auto")
+        .append("path")
+        .attr("d", "M 0 0 L 10 5 L 0 10 z")
+        .attr("fill", "#94a3b8");
+
+
+    /*
+     * Draw connection arcs
+     */
+    const connectionGroup = drawing.append("g")
+        .attr("class", "connections");
+
+
+    connectionGroup.selectAll(".connection-link")
+        .data(connections)
+        .join("path")
+        .attr("class", "connection-link")
+        .attr("fill", "none")
+        .attr("stroke", "#94a3b8")
+        .attr("stroke-width", 1.5)
+        .attr("marker-end", "url(#connection-arrow)")
+        .attr("d", d => {
+
+            // Direction: second node -> first node
+
+            const gap = NODE_RADIUS;
+
+            // Start at the bottom of the second node
+            const startX = d.target.x;
+            const startY = d.target.y + gap;
+
+            // End at the bottom of the first node
+            const endX = d.source.x;
+            const endY = d.source.y + gap;
+
+            // Midpoint between the two nodes
+            const midpointX = (startX + endX) / 2;
+            const midpointY = (startY + endY) / 2;
+
+            const distance = Math.hypot(endX - startX, endY - startY);
+            const bend = distance * 0.5;
+
+            // Push the curve downward
+            const controlX = midpointX;
+            const controlY = midpointY + bend;
+
+            return `
+        M ${startX},${startY}
+        Q ${controlX},${controlY}
+          ${endX},${endY}`;
+        });
+
     const links = root.links();
 
     const linkGenerator = d3.linkVertical()
@@ -221,6 +331,8 @@ function renderTree(data) {
     currentUpdateLinks = updateLinks;
 
     updateLinks();
+
+
 
     /*
      * Draw nodes

@@ -194,8 +194,8 @@ main {
 
 /* Straight connector lines */
 #tree-container svg.minimal-view .link {
-    fill: none;
-    stroke: #94a3b8;
+    fill: none; 
+    stroke: #64748b;
     stroke-width: 1.5px;
 }
 #status {

@@ -6,6 +6,7 @@ public class Node{
     protected Node left;
     protected Node right;
     protected final String value;
+    protected int connectionID = 0;
     protected Phrase phrase;
 
     public Node(String content){
@@ -25,12 +26,17 @@ public class Node{
     public String getValue() { return value; }
     public Phrase getPhrase() { return phrase; }
 
+    public int getConnectionID() { return connectionID; }
+    public void setConnectionID(int id) { connectionID = id; }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder(value);
         
         if(phrase != null)
             sb.append("  ").append(phrase.getForm());
+        if(connectionID != 0)
+            sb.append("  Connection id: " + connectionID);
 
         return sb.toString();
     }
