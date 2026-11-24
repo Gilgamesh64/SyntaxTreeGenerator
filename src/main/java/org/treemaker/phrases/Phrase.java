@@ -29,7 +29,7 @@ public class Phrase {
         if(!restOf.isEmpty()) restOf = restOf.substring(1);
         return switch (category){
             case "VER" -> new Verb(form, lemma, restOf);
-            case "NOUN" -> new Noun(form, lemma, restOf);
+            case "NOUN", "NPR"-> new Noun(form, lemma, restOf);
             case "ART" -> new Article(form, lemma, restOf, false);
             case "ARTPRE" -> new Article(form, lemma, restOf, true);
             case "ADJ" -> new Adjective(form, lemma, restOf);

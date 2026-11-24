@@ -23,7 +23,7 @@ async function loadTree(message) {
             headers: {
                 "Content-Type": "text/plain"
             },
-            body: message.toLowerCase()
+            body: message
         });
 
         const json = await response.json();
@@ -181,23 +181,15 @@ function renderTree(data) {
     const connections = [];
 
     connectionGroups.forEach((nodes, id) => {
-
-        if (nodes.length === 2) {
+        if (id != -1) {
 
             connections.push({
                 id,
                 source: nodes[0],
                 target: nodes[1]
             });
-
-        } else {
-
-            console.warn(
-                `Connection ${id} has ${nodes.length} nodes instead of 2`,
-                nodes
-            );
-
         }
+
 
     });
 

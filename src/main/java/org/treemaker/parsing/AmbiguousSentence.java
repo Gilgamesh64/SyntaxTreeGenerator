@@ -45,13 +45,9 @@ public class AmbiguousSentence{
                 }
                 if(ap.containsMeaning(Verb.class) && !sentence.contains(Verb.class)){
                     for (Verb v : ap.getAllPhrases(Verb.class)) {
-                        if(v.getMode().equals("impr") && sentence.contains(Noun.class))
+                        if(v.getMode().equalsIgnoreCase("impr") && sentence.contains(Noun.class))
                             continue;
-                        if(sentence.contains(Verb.class)){
-                            System.out.println("Ambiguous verb cannot be resolved: " + v);
-                        }
-                        else
-                            sentence.add(v);
+                        sentence.add(v);
                     }
                 }
                 

@@ -6,7 +6,7 @@ public class Node{
     protected Node left;
     protected Node right;
     protected final String value;
-    protected int connectionID = 0;
+    protected int connectionID = -1;
     protected Phrase phrase;
 
     public Node(String content){
@@ -35,7 +35,7 @@ public class Node{
         
         if(phrase != null)
             sb.append("  ").append(phrase.getForm());
-        if(connectionID != 0)
+        if(connectionID != -1)
             sb.append("  Connection id: " + connectionID);
 
         return sb.toString();

@@ -30,21 +30,33 @@ public class Generator {
         AmbiguousSentence as = new AmbiguousSentence();
 
         for (String key : words) {
-            pstmt.setString(1, key);
+            boolean found = false;
+            int tries = 3;
 
-            var rs = pstmt.executeQuery();
+            for (int i = 0; i < tries && !found; i++) {
+                String word = key;  //first try: base string
+                if(i == 1){ //second try: to lower (checks auto maiusc on first letter on mobile) 
+                    word = key.toLowerCase(); 
+                } 
+                if(i == 2){  //last try: capitalize first letter (checks names)
+                    word = key.substring(0, 1).toUpperCase() + key.substring(1);   
+                }
+                pstmt.setString(1, word);
 
-            int count = 0;
+                var rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                String form = rs.getString("form");
-                String lemma = rs.getString("lemma");
-                String features = rs.getString("features");
-                as.add(Phrase.from(form, lemma, features));
-                count++;
+                while (rs.next()) {
+                    found = true;
+                    String form = rs.getString("form");
+                    String lemma = rs.getString("lemma");
+                    String features = rs.getString("features");
+                    Phrase p = Phrase.from(form, lemma, features);
+                    as.add(p);
+                }
+                rs.close();
             }
-            rs.close();
-            if(count == 0){
+
+            if (!found) {
                 throw new UnknownPhraseException("The sentence is either empty or invalid");
             }
         }

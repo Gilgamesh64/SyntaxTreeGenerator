@@ -3,25 +3,30 @@ package org.treemaker.tree;
 import org.treemaker.parsing.Sentence;
 import org.treemaker.phrases.Article;
 import org.treemaker.phrases.Noun;
+import org.treemaker.phrases.UnknownPhraseException;
 import org.treemaker.phrases.Verb;
 
 public class Tree {
 
-    protected  Node root;
+    protected Node root;
     private Sentence sentence;
+    private ConnectionsManager cm;
 
-    public Tree(Sentence sentence) {
+    public Tree(Sentence sentence) throws UnknownPhraseException{
         this.sentence = sentence;
+        cm = new ConnectionsManager();
 
         if(sentence.contains(Verb.class)){
             root = new Node("TP");
             writeTP(root);
+            return;
         }
-        if(!sentence.contains(Verb.class) && !sentence.contains(Article.class) && sentence.contains(Noun.class)){
-            root = new Node("NP");
-            writeNP(root);
+        if(sentence.contains(Noun.class)){
+            root = new Node("DP");
+            writeDP(root);
+            return;
         }
-        
+        throw new UnknownPhraseException("Sentence with no verb or nouns");
     }
 
     private void writeTP(Node tp){
@@ -31,16 +36,16 @@ public class Tree {
         Node t = new Node("T'");
         tp.setRight(t);
         t.setLeft(new Node("T", sentence.get(Verb.class)));
+        
+        if(!sentence.contains(Article.class) && sentence.contains(Noun.class)){
+            cm.add(t.getLeft(), Verb.class);
+        }
         t.setRight(new Node("VP"));
         writeVP(t.getRight());
     }
 
     private void writeVP(Node vp){
-        if(sentence.contains(Noun.class) && !sentence.contains(Article.class)){
-            vp.setLeft(new Node("NP"));
-            writeNP(vp.getLeft());
-        }
-        if(sentence.contains(Noun.class) && sentence.contains(Article.class)){
+        if(sentence.contains(Noun.class)){
             vp.setLeft(new Node("DP"));
             writeDP(vp.getLeft());
         }
@@ -48,6 +53,9 @@ public class Tree {
         vp.setRight(v);
         Node verb = new Node("V", sentence.get(Verb.class));
         v.setLeft(verb);
+        if(!sentence.contains(Article.class)){
+            cm.add(v.getLeft(), Verb.class);
+        }
     }
 
     private void writeNP(Node np){
@@ -55,14 +63,27 @@ public class Tree {
         np.setRight(n);
         Node noun = new Node("N", sentence.get(Noun.class));
         n.setLeft(noun);
+        if(!sentence.contains(Article.class))
+            cm.add(noun, Noun.class);
     }
 
     private void writeDP(Node dp){
-        dp.setConnectionID(1);
+        if(sentence.contains(Article.class)){
+            cm.add(dp, Noun.class);
+        }
+
         Node a = new Node("D'");
         dp.setRight(a);
-        Node article = new Node("D", sentence.get(Article.class));
-        a.setLeft(article);
+        if(sentence.contains(Article.class)){
+            Node article = new Node("D", sentence.get(Article.class));
+            a.setLeft(article);
+        }
+        else{
+            Node duplication = new Node("D", sentence.get(Noun.class));
+            a.setLeft(duplication);
+            cm.add(duplication, Noun.class);
+        }
+
         if(sentence.contains(Noun.class)){
             a.setRight(new Node("NP"));
             writeNP(a.getRight());
