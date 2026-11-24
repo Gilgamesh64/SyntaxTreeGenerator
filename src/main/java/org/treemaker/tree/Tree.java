@@ -37,9 +37,8 @@ public class Tree {
         tp.setRight(t);
         t.setLeft(new Node("T", sentence.get(Verb.class)));
         
-        if(!sentence.contains(Article.class) && sentence.contains(Noun.class)){
-            cm.add(t.getLeft(), Verb.class);
-        }
+        cm.add(t.getLeft(), Verb.class);
+        
         t.setRight(new Node("VP"));
         writeVP(t.getRight());
     }
@@ -53,9 +52,8 @@ public class Tree {
         vp.setRight(v);
         Node verb = new Node("V", sentence.get(Verb.class));
         v.setLeft(verb);
-        if(!sentence.contains(Article.class)){
-            cm.add(v.getLeft(), Verb.class);
-        }
+        cm.add(v.getLeft(), Verb.class);
+        
     }
 
     private void writeNP(Node np){
