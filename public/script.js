@@ -253,7 +253,7 @@ function renderTree(data) {
             const midpointY = (startY + endY) / 2;
 
             const distance = Math.hypot(endX - startX, endY - startY);
-            const bend = distance * 0.5;
+            const bend = distance * 0.3;
 
             // Push the curve downward
             const controlX = midpointX;
