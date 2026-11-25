@@ -1,5 +1,13 @@
 merge di entry con caratteristiche uguali
 
+PRO-NUM
+PRO-INDEF-F-P
+PRO-PERS-CLI-1-F-P
+PRO-WH-F-S
+PRO-POSS-M-S
+PRO-PERS-1-M-P
+PRO-DEMO-F-P
+
 SUBSET FINORA
 ADJ -> :pos+m+s
 ADV -> 0

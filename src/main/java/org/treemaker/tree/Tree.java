@@ -1,5 +1,6 @@
 package org.treemaker.tree;
 
+import java.util.HashMap;
 import org.treemaker.parsing.Sentence;
 import org.treemaker.phrases.Article;
 import org.treemaker.phrases.Noun;
@@ -19,14 +20,12 @@ public class Tree {
         if(sentence.contains(Verb.class)){
             root = new Node("TP");
             writeTP(root);
-            return;
         }
-        if(sentence.contains(Noun.class)){
+        else if(sentence.contains(Noun.class)){
             root = new Node("DP");
             writeDP(root);
-            return;
         }
-        throw new UnknownPhraseException("Sentence with no verb or nouns");
+        checkConnections();
     }
 
     private void writeTP(Node tp){
@@ -35,7 +34,7 @@ public class Tree {
 
         Node t = new Node("T'");
         tp.setRight(t);
-        t.setLeft(new Node("T", sentence.get(Verb.class)));
+        t.setLeft(new Node("T", sentence.getFirst(Verb.class).get()));
         
         cm.add(t.getLeft(), Verb.class);
         
@@ -50,7 +49,7 @@ public class Tree {
         }
         Node v = new Node("V'");
         vp.setRight(v);
-        Node verb = new Node("V", sentence.get(Verb.class));
+        Node verb = new Node("V", sentence.getFirst(Verb.class).get());
         v.setLeft(verb);
         cm.add(v.getLeft(), Verb.class);
         
@@ -59,7 +58,7 @@ public class Tree {
     private void writeNP(Node np){
         Node n = new Node("N'");
         np.setRight(n);
-        Node noun = new Node("N", sentence.get(Noun.class));
+        Node noun = new Node("N", sentence.getFirst(Noun.class).get());
         n.setLeft(noun);
         if(!sentence.contains(Article.class))
             cm.add(noun, Noun.class);
@@ -73,11 +72,11 @@ public class Tree {
         Node a = new Node("D'");
         dp.setRight(a);
         if(sentence.contains(Article.class)){
-            Node article = new Node("D", sentence.get(Article.class));
+            Node article = new Node("D", sentence.getFirst(Article.class).get());
             a.setLeft(article);
         }
         else{
-            Node duplication = new Node("D", sentence.get(Noun.class));
+            Node duplication = new Node("D", sentence.getFirst(Noun.class).get());
             a.setLeft(duplication);
             cm.add(duplication, Noun.class);
         }
@@ -86,6 +85,26 @@ public class Tree {
             a.setRight(new Node("NP"));
             writeNP(a.getRight());
         }
+    }
+
+    private void checkConnections() throws UnknownPhraseException{
+        HashMap<Integer, Integer> connectionsFound = new HashMap<>();
+        checkConnectionsRec(root, connectionsFound);
+        long errors = connectionsFound.values().stream().filter(v -> v != 2).count();
+        if(errors != 0){
+            throw new UnknownPhraseException("There is an error creating connections: " + connectionsFound.toString());
+        }
+    }
+    private void checkConnectionsRec(Node curr, HashMap<Integer, Integer> connectionsFound){
+        if(curr == null) return; 
+
+        if(curr.getConnectionID() != -1) {
+            connectionsFound.put(
+                curr.getConnectionID(), 
+                connectionsFound.getOrDefault(curr.getConnectionID(), 0) + 1);
+        }
+        checkConnectionsRec(curr.getLeft(), connectionsFound);
+        checkConnectionsRec(curr.getRight(), connectionsFound);
     }
 
     @Override

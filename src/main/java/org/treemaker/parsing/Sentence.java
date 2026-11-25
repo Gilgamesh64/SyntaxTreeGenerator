@@ -1,25 +1,14 @@
 package org.treemaker.parsing;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import org.treemaker.phrases.Phrase;
 
 public class Sentence{
-    private ArrayList<Phrase> phrases;
+    private ArrayList<Phrase> phrases = new ArrayList<>();
 
-    public Sentence(){
-        phrases = new ArrayList<>();
-    }
-
-    public void add(Phrase phrase){
-        phrases.add(phrase);
-    }
-
-    public Phrase getOnly() throws IllegalStateException{
-        if(phrases.size() != 1)
-            throw new IllegalStateException("AmbiguousPhrase has more then one meaning");
-        return phrases.getFirst();
-    }
+    public void add(Phrase phrase){ phrases.add(phrase); }
 
     public <T extends Phrase> int count(Class<T> phrase){
         int amount = 0;
@@ -44,15 +33,36 @@ public class Sentence{
         return out;
     }
 
-    public <T extends Phrase> T get(Class<T> phrase) throws IllegalStateException{
-        if(count(phrase) != 1)
-            throw new IllegalStateException("Cannot call function: getPhrase with more then one meaning");
-        
+    public <T extends Phrase> Optional<T> getFirst(Class<T> phrase){
         for(Phrase p : phrases){
             if(phrase.isInstance(p))
-                return phrase.cast(p);
+                return Optional.of(phrase.cast(p));
         }
-        throw new IllegalStateException("No meaning of the requested type");
+        return Optional.empty();
+    }
+
+    
+    public <T extends Phrase, K extends Phrase> Optional<T> getBefore(Class<T> before, Class<K> after){
+        T inst = null;
+        for(Phrase p : phrases){
+            if(inst != null && after.isInstance(p)){
+                return Optional.of(inst);
+            }
+            if(before.isInstance(p)){
+                inst = before.cast(p);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public <T extends Phrase, K extends Phrase, J extends Phrase> Optional<K> getBetween(Class<T> before, Class<K> middle, Class<J> after){
+        Optional<T> isBefore = getBefore(before, middle);
+        Optional<K> isMiddle = getBefore(middle, after);
+
+        if(isBefore.isEmpty() || isMiddle.isEmpty())
+            return Optional.empty();
+
+        return isMiddle;
     }
 
     @Override

@@ -33,6 +33,7 @@ public class Phrase {
             case "ART" -> new Article(form, lemma, restOf, false);
             case "ARTPRE" -> new Article(form, lemma, restOf, true);
             case "ADJ" -> new Adjective(form, lemma, restOf);
+            case "PRO" -> new Pronoun(form, lemma, restOf);
             default -> throw new UnknownPhraseException(form);
         };
     }
